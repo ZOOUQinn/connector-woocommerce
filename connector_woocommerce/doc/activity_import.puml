@@ -1,6 +1,6 @@
 @startuml
 :Click **Import** Button<
-:Is Linux Platform?;
+:Is Linux Platform?(Can active Async Mode?);
 if () then (Yes)
   :Async Mode;
 else (No)
