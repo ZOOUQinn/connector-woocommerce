@@ -1,0 +1,56 @@
+@startuml
+class wc_backend {
+  #name : Char
+  #location : URL
+  #consumer_key : Char
+  #consumer_secret : Char
+
+  #import_data(woo_model : Char) : void
+  #export_data(woo_model : Char) : void
+
+  #import_categorie() : void
+  #export_categorie() : void
+  #import_product() : void
+  #export_product() : void
+  #import_customer() : void
+  #export_customer() : void
+  #import_order() : void
+  #export_order() : void
+
+  #import_categories() : void
+  #export_categories() : void
+  #import_products() : void
+  #export_products() : void
+  #import_customers() : void
+  #export_customers() : void
+  #import_orders() : void
+  #export_orders() : void
+}
+
+abstract woo_binding{
+  import_batch()
+  export_batch()
+
+  import_record()
+  export_record()
+}
+
+class woo_product_category{
+
+}
+class woo_product_product{
+
+}
+class woo_res_partner{
+
+}
+class woo_sale_order{
+
+}
+
+woo_binding <|-- woo_product_category
+woo_binding <|-- woo_product_product
+woo_binding <|-- woo_res_partner
+woo_binding <|-- woo_sale_order
+
+@enduml
