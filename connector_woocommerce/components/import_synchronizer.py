@@ -244,22 +244,6 @@ class BatchImporter(AbstractComponent):
         raise NotImplementedError
 
 
-# class DirectBatchImporter(BatchImporter):
-#
-#     """ Import the records directly, without delaying the jobs. """
-#     _model_name = None
-#
-#     def _import_record(self, record_id):
-#         """ Import the record directly """
-#         import_record(self.session,
-#                       self.model._name,
-#                       self.backend_record.id,
-#                       record_id)
-#
-#
-# DirectBatchImport = DirectBatchImporter
-
-
 class DelayedBatchImporter(AbstractComponent):
 
     """ Delay import of the records """
@@ -272,12 +256,3 @@ class DelayedBatchImporter(AbstractComponent):
             self.model.with_delay().import_record(self.backend_record, record_id)
         else:
             self.model.import_record(self.backend_record, record_id)
-
-
-# @job(default_channel='root.woo')
-# @related_action(action=link)
-# def import_record(session, model_name, backend_id, woo_id, force=False):
-#     """ Import a record from Woo """
-#     env = get_environment(session, model_name, backend_id)
-#     importer = env.get_connector_unit(WooImporter)
-#     importer.run(woo_id, force=force)
