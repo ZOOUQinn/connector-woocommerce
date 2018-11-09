@@ -27,6 +27,11 @@ class wc_backend {
   #export_orders() : void
 }
 
+class queue_job{
+  -job()
+  -related_action()
+}
+
 abstract woo_binding{
   import_batch()
   export_batch()
@@ -36,21 +41,181 @@ abstract woo_binding{
 }
 
 class woo_product_category{
-
+  +_name:Char = 'woo.product.category'{readOnly}
 }
 class woo_product_product{
-
+  +_name:Char = 'woo.product.product'{readOnly}
 }
 class woo_res_partner{
-
+  +_name:Char = 'woo.res.partner'{readOnly}
 }
 class woo_sale_order{
-
+  +_name:Char = 'woo.sale.order'{readOnly}
 }
 
-woo_binding <|-- woo_product_category
-woo_binding <|-- woo_product_product
-woo_binding <|-- woo_res_partner
-woo_binding <|-- woo_sale_order
+abstract woo_batch_importer{
+  +_usage:Char = 'batch.importer'{readOnly}
+  #run(filter:Char):viod
+}
 
+abstract woo_delayed_batch_importer{
+  #_import_record(record_id:int, **kwargs):
+}
+
+class woo_category_batch_importer{
+  +_apply_on:List[Char] = ['woo.product.category']{readOnly}
+  #run(filter:Char):void
+}
+class woo_product_batch_importer{
+  +_apply_on:List[Char] = ['woo.product.product']{readOnly}
+  #run(filter:Char):void
+}
+class woo_customer_batch_importer{
+  +_apply_on:List[Char] = ['woo.res.partner']{readOnly}
+  #run(filter:Char):void
+}
+class woo_sale_batch_importer{
+  +_apply_on:List[Char] = ['woo.sale.order']{readOnly}
+  #run(filter:Char):void
+}
+
+abstract base_synchronizer{
+  -_base_backend_adapter_usage:Char = 'backend.adapter'{readOnly}
+  #backend_adapter
+  #mapper
+}
+
+abstract woo_crud_adapter{
+  +_usage:Char = 'backend.adapter'{readOnly}
+  {abstract} #search(filter:Char):[int]
+}
+
+abstract woo_adapter{
+  #search(filter:Char):[int]
+}
+
+class woo_category_adapter{
+  #search(filter:Char):[int]
+}
+class woo_product_adapter{
+  #search(filter:Char):[int]
+}
+class woo_customer_adapter{
+  #search(filter:Char):[int]
+}
+class woo_sale_adapter{
+  #search(filter:Char):[int]
+}
+
+abstract woo_importer{
+  +_usage:Char = 'record.importer'{readOnly}
+  #run(woo_id:int):void
+
+  #_get_woo_data():dict
+  #_get_binding()
+  #_import_dependencies()
+  #_map_data():MapRecord
+  #_create_data(map_record:MapRecord, **kwargs)
+  #_update_data(map_record:MapRecord, **kwargs)
+  #_after_import()
+}
+
+class woo_product_category_importer{
+  #_import_dependencies()
+}
+
+class woo_product_product_importer{
+  #_import_dependencies()
+  #_after_import()
+}
+
+class woo_sale_importer{
+  #_import_dependencies()
+}
+
+abstract base_importer{
+  +_base_mapper_usage:Char = 'import.mapper'{readOnly}
+}
+
+abstract base_import_mapper{
+  +_usage:Char = 'import.mapper' {readOnly}
+}
+
+class woo_category_import_mapper{
+  #name(rec:dict): dict
+  #backend_id(rec:dict): dict
+  #parent_id(rec:dict): dict
+}
+
+class woo_product_import_mapper{
+  #in_stock(rec:dict): dict
+  #name(rec:dict): dict
+  #type(rec:dict): dict
+  #categories(rec:dict): dict
+  #price(rec:dict): dict
+  #sale_price(rec:dict): dict
+  #backend_id(rec:dict): dict
+}
+
+class woo_costomer_import_mapper{
+  #name(rec:dict): dict
+  #email(rec:dict): dict
+  #city(rec:dict): dict
+  #zip(rec:dict): dict
+  #address(rec:dict): dict
+  #address_2(rec:dict): dict
+  #country(rec:dict): dict
+  #state(rec:dict): dict
+  #backend_id(rec:dict): dict
+}
+
+class woo_sale_import_mapper{
+  #status(rec:dict): dict
+  #customer_id(rec:dict): dict
+  #backend_id(rec:dict): dict
+}
+
+queue_job <. woo_binding
+
+wc_backend ..> woo_product_category
+wc_backend ..> woo_product_product
+wc_backend ..> woo_res_partner
+wc_backend ..> woo_sale_order
+
+woo_product_category --|> woo_binding
+woo_product_product --|> woo_binding
+woo_res_partner --|> woo_binding
+woo_sale_order --|> woo_binding
+
+woo_binding ..> woo_batch_importer
+woo_binding ..> woo_importer
+
+woo_batch_importer -|> base_importer
+base_importer --|> base_synchronizer
+woo_batch_importer <|-- woo_delayed_batch_importer
+woo_delayed_batch_importer <|-- woo_category_batch_importer
+woo_delayed_batch_importer <|-- woo_product_batch_importer
+woo_delayed_batch_importer <|-- woo_customer_batch_importer
+woo_delayed_batch_importer <|-- woo_sale_batch_importer
+
+base_synchronizer ...> woo_crud_adapter
+base_synchronizer ....> base_import_mapper
+woo_adapter -|> woo_crud_adapter
+woo_adapter .> woocommerce_api
+woo_adapter <|-- woo_category_adapter
+woo_adapter <|-- woo_product_adapter
+woo_adapter <|-- woo_customer_adapter
+woo_adapter <|-- woo_sale_adapter
+
+base_importer <|- woo_importer
+
+woo_importer <|-- woo_product_category_importer
+woo_importer <|-- woo_product_product_importer
+woo_importer <|-- woo_customer_importer
+woo_importer <|-- woo_sale_importer
+
+base_import_mapper <|-- woo_category_import_mapper
+base_import_mapper <|-- woo_product_import_mapper
+base_import_mapper <|-- woo_costomer_import_mapper
+base_import_mapper <|-- woo_sale_import_mapper
 @enduml
