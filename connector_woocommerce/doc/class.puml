@@ -34,9 +34,9 @@ class queue_job{
 
 abstract woo_binding{
   import_batch()
-  export_batch()
-
   import_record()
+
+  export_batch()
   export_record()
 }
 
@@ -175,7 +175,81 @@ class woo_sale_import_mapper{
   #backend_id(rec:dict): dict
 }
 
-queue_job <. woo_binding
+abstract base_exporter{
+  +_base_mapper_usage:Char = 'export.mapper'{readOnly}
+}
+
+abstract woo_batch_exporter{
+  +_usage:Char = 'batch.exporter'{readOnly}
+}
+
+abstract woo_delayed_batch_exporter{
+  #_export_record(record:Odoo_Rec, **kwargs):void
+}
+
+class woo_category_batch_exporter
+class woo_product_batch_exporter
+class woo_customer_batch_exporter
+class woo_sale_batch_exporter
+
+abstract woo_exporter{
+  +_usage:Char = 'record.exporter'{readOnly}
+  #run(woo_id:int):void
+
+  #_get_woo_id():int
+  #_export_dependencies()
+  #_map_data():MapRecord
+  #_create_data(map_record:MapRecord, **kwargs)
+  #_update_data(map_record:MapRecord, **kwargs)
+  #_after_export()
+}
+
+class woo_product_category_exporter{
+  #_export_dependencies()
+}
+class woo_product_product_exporter{
+  #_export_dependencies()
+}
+class woo_sale_exporter{
+  #_export_dependencies()
+}
+
+abstract base_export_mapper{
+  +_usage:Char = 'export.mapper'{readOnly}
+}
+
+class woo_category_export_mapper{
+  #name(rec:dict): dict
+  #backend_id(rec:dict): dict
+  #parent_id(rec:dict): dict
+  #openerp_id(rec:dict): dict
+}
+
+class woo_product_export_mapper{
+  #in_stock(rec:dict): dict
+  #name(rec:dict): dict
+  #categories(rec:dict): dict
+  #price(rec:dict): dict
+  #sale_price(rec:dict): dict
+  #backend_id(rec:dict): dict
+  #openerp_id(rec:dict): dict
+  #image(rec:dict): dict
+}
+
+class woo_costomer_export_mapper{
+  #name(rec:dict): dict
+  #email(rec:dict): dict
+  #billing_info(rec:dict): dict
+  #backend_id(rec:dict): dict
+  #openerp_id(rec:dict): dict
+}
+
+class woo_sale_export_mapper{
+  #line_items(rec:dict): dict
+  #customer_id(rec:dict): dict
+  #backend_id(rec:dict): dict
+  #openerp_id(rec:dict): dict
+}
 
 wc_backend ..> woo_product_category
 wc_backend ..> woo_product_product
@@ -187,27 +261,33 @@ woo_product_product --|> woo_binding
 woo_res_partner --|> woo_binding
 woo_sale_order --|> woo_binding
 
+queue_job <. woo_binding
+
 woo_binding ..> woo_batch_importer
 woo_binding ..> woo_importer
+woo_binding ..> woo_batch_exporter
+woo_binding ..> woo_exporter
 
-woo_batch_importer -|> base_importer
+woo_batch_importer --|> base_importer
+woo_importer --|> base_importer
 base_importer --|> base_synchronizer
+
 woo_batch_importer <|-- woo_delayed_batch_importer
 woo_delayed_batch_importer <|-- woo_category_batch_importer
 woo_delayed_batch_importer <|-- woo_product_batch_importer
 woo_delayed_batch_importer <|-- woo_customer_batch_importer
 woo_delayed_batch_importer <|-- woo_sale_batch_importer
 
-base_synchronizer ...> woo_crud_adapter
-base_synchronizer ....> base_import_mapper
+base_synchronizer ..> woo_crud_adapter
+base_synchronizer ..> base_import_mapper
+base_synchronizer ..> base_export_mapper
+
+woocommerce_api <. woo_adapter
 woo_adapter -|> woo_crud_adapter
-woo_adapter .> woocommerce_api
 woo_adapter <|-- woo_category_adapter
 woo_adapter <|-- woo_product_adapter
 woo_adapter <|-- woo_customer_adapter
 woo_adapter <|-- woo_sale_adapter
-
-base_importer <|- woo_importer
 
 woo_importer <|-- woo_product_category_importer
 woo_importer <|-- woo_product_product_importer
@@ -218,4 +298,24 @@ base_import_mapper <|-- woo_category_import_mapper
 base_import_mapper <|-- woo_product_import_mapper
 base_import_mapper <|-- woo_costomer_import_mapper
 base_import_mapper <|-- woo_sale_import_mapper
+
+woo_batch_exporter --|> base_exporter
+woo_batch_exporter <|-- woo_delayed_batch_exporter
+woo_delayed_batch_exporter <|-- woo_category_batch_exporter
+woo_delayed_batch_exporter <|-- woo_product_batch_exporter
+woo_delayed_batch_exporter <|-- woo_customer_batch_exporter
+woo_delayed_batch_exporter <|-- woo_sale_batch_exporter
+base_exporter --|> base_synchronizer
+
+woo_exporter <|-- woo_product_category_exporter
+woo_exporter <|-- woo_product_product_exporter
+woo_exporter <|-- woo_customer_exporter
+woo_exporter <|-- woo_sale_exporter
+
+woo_exporter --|> base_exporter
+
+base_export_mapper <|-- woo_category_export_mapper
+base_export_mapper <|-- woo_product_export_mapper
+base_export_mapper <|-- woo_costomer_export_mapper
+base_export_mapper <|-- woo_sale_export_mapper
 @enduml
